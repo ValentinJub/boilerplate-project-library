@@ -8,13 +8,14 @@
 
 'use strict';
 
+const { default: mongoose } = require("mongoose");
 const Book = require("../models/books")
 const Comment = require("../models/comments")
 
 module.exports = function (app) {
 
   app.route('/api/books')
-    .get(async (req, res) => {
+    .get( async (req, res) => {
       //response will be array of book objects
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
       try {
@@ -65,13 +66,17 @@ module.exports = function (app) {
   app.route('/api/books/:id')
     .get( async (req, res) => {
       let bookid = req.params.id;
+      // console.log(req.url)
+      console.log(req.query)
+      console.log(req.params)
+      // if(bookid !== typeof mongoose.Types.ObjectId) return res.send("no book exists")
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
       try {
         let com = await Comment.findOne({book: bookid});
         let book = await Book.findById(bookid);
 
         if(!book) {
-          return res.send("no book exists")
+          return res.send("no book exists") 
         }
         
         let commentArray = com.comment.length > 0 ? com.comment : []
@@ -85,7 +90,7 @@ module.exports = function (app) {
         return res.json(obj)
 
       } catch (e) {
-        console.error(e)
+        // console.error(e)
         return res.send("no book exists")
       }
     })
@@ -109,11 +114,14 @@ module.exports = function (app) {
         }
 
         com.comment.push(comment);
+        book.commentcount++;
         let savedcom = await com.save();
+        let savebook = await book.save();
 
         let obj = {
           _id: book._id,
           title: book.title,
+          commentcount: book.commentcount,
           comments: com.comment
         }
 
@@ -123,26 +131,6 @@ module.exports = function (app) {
         console.error(e);
         res.redirect("/"); 
       }
-      
-      // try {
-      //   //we make sure the bookID is existing
-      //   let book = await Book.findById(bookid);
-
-        
-
-      //   let newComment = new Comment({
-      //     comment: comment,
-      //     book: bookid
-      //   }) 
-
-      //   let saveComment = await newComment.save();
-
-      //   let bookComments = 
-      // } catch (e) {
-      //   console.error(e);
-      //   res.redirect("/"); 
-      // }
-
     })
     
     .delete( async (req, res) => {
